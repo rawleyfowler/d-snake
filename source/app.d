@@ -1,8 +1,10 @@
 import archttp;
 import dsnake.board;
-import dsnake.movement;
+import dsnake.movement : Movement;
+import std.logger;
 import std.json;
 import std.functional;
+import std.algorithm.iteration;
 import std.stdio;
 
 const string VERSION = "1";
@@ -15,35 +17,41 @@ void main()
     app.get("/end", toDelegate(&end));
     app.get("/start", toDelegate(&start));
 
-    app.listen(8080);
+    app.listen(3000);
 }
 
 void index(scope HttpRequest _, scope HttpResponse res)
 {
     JSONValue response = [
-        "apiversion": VERSION,
-        "author": "rawley fowler",
-        "color": "#FF6962",
-        "head": "all-seeing",
-        "tail": "mystic-moon"
+        "apiversion": VERSION, "author": "rawley fowler", "color": "#FF6962",
+        "head": "all-seeing", "tail": "mystic-moon"
     ];
     res.send(response);
 }
 
 void end(scope HttpRequest _, scope HttpResponse res)
 {
-    writeln("DONE GAME!");
-    res.send("DONE!");
+    log("DONE GAME!");
+    res.send(JSONValue(["message": "DONE!"]));
 }
 
 void start(scope HttpRequest _, scope HttpResponse res)
 {
-    writeln("STARTING GAME!");
-    res.send("STARTING!");
+    log("STARTING GAME!");
+    res.send(JSONValue(["message": "STARTING!"]));
 }
 
-void move (scope HttpRequest req, scope HttpResponse res)
+void move(scope HttpRequest req, scope HttpResponse res)
 {
-    auto board = Board.fromJSON(parseJSON(req.body));
-    res.write(JSONValue(["foo": "bar"]));
+    auto board = new immutable Board(parseJSON(req.body));
+    auto movements = Movement.from(board);
+    auto best_move = movements.reduce!((a, b) => a.cost < b.cost ? b : a);
+    auto best_move_json = best_move.json;
+
+    log(best_move_json);
+
+    res.send(JSONValue([
+            "move": best_move_json["direction"],
+            "shout": JSONValue("Foo!")
+    ]));
 }

@@ -1,35 +1,67 @@
 module dsnake.point;
 
 import dsnake.direction;
+import std.json;
+import std.algorithm;
+import std.array;
 
-struct Point {
-  int x;
-  int y;
+struct Point
+{
+@safe:
+    immutable int x;
+    immutable int y;
 
-  bool equals(Point p) {
-    return p.x == this.x && p.y == this.y;
-  }
+    this(int x, int y) immutable
+    {
+        this.x = x;
+        this.y = y;
+    }
 
-  Point move(Direction d) {
-    auto p = new Point;
-    p.x = this.x;
-    p.y = this.y;
+    bool equals(Point p)
+    {
+        return p.x == this.x && p.y == this.y;
+    }
 
-    switch(d) {
-    case Direction.UP:
-      p.y++;
-      break;
-    case Direction.DOWN:
-      p.y--;
-      break;
-    case Direction.LEFT:
-      p.x--;
-      break;
-    case Direction.RIGHT:
-      p.x++;
-      break;
-    };
+    immutable(Point*) move(Direction d) immutable
+    {
+        int nx = this.x;
+        int ny = this.y;
 
-    return p;
-  }
+        final switch (d)
+        {
+        case Direction.UP:
+            ny++;
+            break;
+        case Direction.DOWN:
+            ny--;
+            break;
+        case Direction.LEFT:
+            nx--;
+            break;
+        case Direction.RIGHT:
+            nx++;
+            break;
+        }
+
+        return new immutable Point(nx, ny);
+    }
+
+    static immutable(Point)*[] fromJSONCoordinates(immutable JSONValue jv) @trusted
+    {
+        if (jv.type != JSONType.ARRAY || jv.type != JSONType.OBJECT)
+        {
+            throw new Exception("EXPECTED ARRAY OR OBJECT GOT " ~ jv.type);
+        }
+
+        if (jv.type == JSONType.OBJECT)
+        {
+            auto p = new immutable Point(jv["x"].get!int, jv["y"].get!int);
+            return [p];
+        }
+
+        return jv.array.map!(p => new immutable Point(p["x"].get!int, p["y"].get!int)).array;
+    }
+
+@disable:
+    this();
 }
