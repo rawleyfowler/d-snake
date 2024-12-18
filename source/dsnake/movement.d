@@ -11,17 +11,30 @@ import std.json;
 class Movement : Entity
 {
 @safe:
+
+    static Movement[] from(Board board)
+    {
+        static auto strategies = StrategyContext.strategies();
+
+        Movement[] moves;
+
+        foreach (Strategy s; strategies)
+            moves ~= s.analyze(board);
+
+        return moves;
+    }
+
     private
     {
         string _strategy;
-        Nullable!string _reason;
+        string _reason;
         Direction _direction;
         uint _cost;
     }
 
 public:
 
-    this(string strategy, Nullable!string _reason, Direction direction, uint cost)
+    this(string strategy, string reason, Direction direction, uint cost) immutable
     {
         _strategy = strategy;
         _reason = reason;
@@ -31,7 +44,7 @@ public:
 
     override JSONValue json()
     {
-        auto reason = this.reason.get("UNKNOWN");
+        auto reason = _reason == "" ? "UNKNOWN" : _reason;
         return JSONValue([
             "direction": JSONValue(this.direction),
             "cost": JSONValue(this.cost),
@@ -40,35 +53,27 @@ public:
         ]);
     }
 
-    @property string strategy()
+    @disable this();
+
+@property:
+    string strategy()
     {
         return strategy;
     }
 
-    @property Nullable!string reason()
+    string reason()
     {
         return _reason;
     }
 
-    @property Direction direction()
+    Direction direction()
     {
         return _direction;
     }
 
-    @property uint cost()
+    uint cost()
     {
         return _cost;
     }
 
-    static Movement[] from(immutable Board board)
-    {
-        static immutable auto strategies = StrategyContext.getStrategies();
-
-        Movement[] moves;
-
-        foreach (immutable Strategy s; strategies)
-            moves ~= s.analyze(board);
-
-        return moves;
-    }
 }

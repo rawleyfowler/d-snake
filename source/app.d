@@ -43,7 +43,7 @@ void start(scope HttpRequest _, scope HttpResponse res)
 
 void move(scope HttpRequest req, scope HttpResponse res)
 {
-    auto board = new immutable Board(parseJSON(req.body));
+    auto board = new Board(parseJSON(req.body));
     auto movements = Movement.from(board);
     auto best_move = movements.reduce!((a, b) => a.cost < b.cost ? b : a);
     auto best_move_json = best_move.json;

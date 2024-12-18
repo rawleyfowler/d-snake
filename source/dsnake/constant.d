@@ -1,3 +1,3 @@
 module dsnake.constant;
 
-static string SNAKE_NAME = "dijon";
+static const string SNAKE_NAME = "dijon";

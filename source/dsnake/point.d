@@ -5,11 +5,23 @@ import std.json;
 import std.algorithm;
 import std.array;
 
-struct Point
+class Point
 {
+
+    override bool opEquals(const Object p) const
+    {
+        if (auto point = cast(Point) p)
+        {
+            return point.x == this.x && point.y == this.y;
+        }
+
+        return false;
+    }
+
 @safe:
-    immutable int x;
-    immutable int y;
+
+    public const int x;
+    public const int y;
 
     this(int x, int y) immutable
     {
@@ -17,12 +29,21 @@ struct Point
         this.y = y;
     }
 
-    bool equals(Point p)
+    this(int x, int y)
     {
-        return p.x == this.x && p.y == this.y;
+        this.x = x;
+        this.y = y;
     }
 
-    immutable(Point*) move(Direction d) immutable
+    override size_t toHash() const nothrow
+    {
+        ulong xs = 0 | x;
+        ulong ys = 0 | y;
+        ys = ys << 32;
+        return xs | ys;
+    }
+
+    Point move(Direction d)
     {
         int nx = this.x;
         int ny = this.y;
@@ -43,10 +64,10 @@ struct Point
             break;
         }
 
-        return new immutable Point(nx, ny);
+        return new Point(nx, ny);
     }
 
-    static immutable(Point)*[] fromJSONCoordinates(immutable JSONValue jv) @trusted
+    static Point[] fromJSONCoordinates(scope JSONValue jv) @trusted
     {
         if (jv.type != JSONType.ARRAY || jv.type != JSONType.OBJECT)
         {
@@ -59,7 +80,13 @@ struct Point
             return [p];
         }
 
-        return jv.array.map!(p => new immutable Point(p["x"].get!int, p["y"].get!int)).array;
+        return jv.array
+            .map!((p) {
+                return p.type == JSONType.OBJECT
+                    ? fromJSONCoordinates(p) : throw new Exception("EXPECTED OBJECT GOT " ~ p.type);
+            })
+            .reduce!((a, b) => a ~ b)
+            .array;
     }
 
 @disable:

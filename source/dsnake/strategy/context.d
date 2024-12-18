@@ -1,13 +1,16 @@
 module dsnake.strategy.context;
 
 import dsnake.strategy.strategy : Strategy;
+import dsnake.strategy.flood : Flood;
 
 class StrategyContext
 {
-@safe:
-    private static immutable Strategy[] strategies = [];
-    public static immutable(Strategy[]) getStrategies()
+static:
+
+    private immutable Strategy[] STRATEGIES = [new Flood()];
+
+    public Strategy[] strategies()
     {
-        return strategies;
+        return STRATEGIES;
     }
 }
