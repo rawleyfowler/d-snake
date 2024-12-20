@@ -23,20 +23,28 @@ import dsnake.board : Board;
 
 class Flood : Strategy
 {
-    private Movement makeMovementFromPoint(Point p, immutable(Board) b, Point[] food,
-            Point[] opponent_potential_moves, Point[] opponent_heads,
-            Point[] opponent_tails, Point[] opponent_bodies, immutable(Snake) me)
+    private Movement makeMovementFromPoint(Point p, Board b, Point[] food, Point[] opponent_potential_moves,
+            Point[] opponent_heads, Point[] opponent_tails, Point[] opponent_bodies, Snake me)
     {
         auto open = 0;
         auto food_count = 0;
         auto queue = DList!Point(p);
         auto iter = 0;
-        DList!uint iterc;
+        DList!int iterc;
         bool[int][int] seen;
         while (!queue.empty())
         {
             auto point = queue.front();
             queue.removeFront();
+
+            auto k = point.x in seen;
+            if (k !is null)
+            {
+                bool* j;
+                j = point.y in *k;
+                if (j !is null)
+                    continue;
+            }
 
             seen[point.x][point.y] = true;
 
@@ -73,8 +81,10 @@ class Flood : Strategy
             }
         }
 
-        return this.makeMovement("CALCULATED MOVEMENT open: " ~ to!string(open),
-                p, me.head, this.DEFAULT_COST - (open * food_count));
+        int delta = 2 * (open * food_count);
+        return this.makeMovement("CALCULATED MOVEMENT (open: " ~ to!string(
+                open) ~ ", food: " ~ to!string(food_count) ~ ")", p, me.head,
+                this.DEFAULT_COST - delta);
     }
 
     protected override const(string) strategy()
@@ -84,15 +94,13 @@ class Flood : Strategy
 
     override Movement[] analyze(Board b)
     {
-        auto heads = b.snakes.map!(s => s.head).array;
-        auto me_biggest = b.biggestSnake().me;
-
         auto opponents = b.snakes.filter!(s => !s.me).array;
         auto me = b.snakes.filter!(s => s.me).array[0];
         Point[][string] opponent_potential_moves_hash = this.makePotentials(opponents,
                 b.height, b.width);
-        Point[] opponent_bodies = opponents.map!(s => s.body[0 .. 1 - $]).reduce((a, b) => a ~ b);
-        Point[] opponent_tails = opponents.map!(s => s.body[$]).array;
+        Point[] opponent_bodies = reduce!((a, b) => a ~ b)(cast(Point[])[],
+                opponents.map!(s => s.body[0 .. $]).array);
+        Point[] opponent_tails = opponents.map!(s => s.body[$ - 1]).array;
         Point[] opponent_heads = opponents.map!(s => s.body[0]).array;
         Point[] me_potential_moves = this.makePotentials([me], b.height, b.width)[SNAKE_NAME];
         Point[] opponent_potential_moves;
@@ -115,13 +123,15 @@ class Flood : Strategy
                 movements ~= this.makeMovement("FOOD!", p, me.head, this.DEFAULT_COST / 10);
             }
 
-            if (opponent_tails.canFind(p) || me.body[$] == p)
+            if (opponent_tails.canFind(p) || me.body[$ - 1] == p)
             {
                 movements ~= this.makeMovement("TAIL FOLLOW!", p, me.head, this.DEFAULT_COST / 2);
             }
 
-            movements ~= this.makeMovementFromPoint(p, b, food, opponent_potential_moves,
+            movements ~= this.makeMovementFromPoint(p, b, b.food, opponent_potential_moves,
                     opponent_heads, opponent_tails, opponent_bodies, me);
         }
+
+        return movements;
     }
 }

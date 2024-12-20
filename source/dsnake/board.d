@@ -43,7 +43,7 @@ public:
             return snake;
         }).array;
 
-        _me = _snakes.filter!(s => s.isMe()).array[0];
+        _me = _snakes.filter!(s => s.me()).array[0];
     }
 
     Snake biggestSnake()
@@ -62,12 +62,12 @@ public:
 nothrow:
     this() @disable;
 @property:
-    const(int) width()
+    int width()
     {
         return _width;
     }
 
-    const(int) height()
+    int height()
     {
         return _height;
     }

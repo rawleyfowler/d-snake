@@ -43,18 +43,17 @@ public:
         return _name;
     }
 
-    immutable(Point[])
-    body()
+    Point[] body()
     {
         return _body;
     }
 
-    immutable(Point) head()
+    Point head()
     {
         return _head;
     }
 
-    bool isMe()
+    bool me()
     {
         return _me;
     }

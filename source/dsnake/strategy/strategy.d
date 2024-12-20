@@ -3,6 +3,7 @@ module dsnake.strategy.strategy;
 import std.typecons;
 import std.array;
 import std.algorithm;
+import std.stdio;
 import dsnake.direction : Direction;
 import dsnake.snake : Snake;
 import dsnake.point : Point;
@@ -11,15 +12,18 @@ import dsnake.board : Board;
 
 abstract class Strategy
 {
-    protected static uint DEFAULT_COST = 10_000;
-    protected auto DIRECTIONS = [
-        0: [1: Direction.UP, -1: Direction.DOWN], 1: [0: Direction.RIGHT],
-        1: [0: Direction.LEFT]
-    ];
+    protected static const int DEFAULT_COST = 100_000;
 
-@safe:
-    protected Point[][string] makePotentials(immutable Snake[] snakes,
-            scope int height, scope int width) immutable @trusted
+    @property protected auto directions()
+    {
+        return [
+            0: [1: Direction.UP, -1: Direction.DOWN],
+            1: [0: Direction.RIGHT],
+            -1: [0: Direction.LEFT]
+        ];
+    }
+
+    protected Point[][string] makePotentials(Snake[] snakes, scope int height, scope int width)
     {
         auto usable_height = height - 1;
         auto usable_width = width - 1;
@@ -43,16 +47,17 @@ abstract class Strategy
         return potentials;
     }
 
-    protected immutable(Movement) makeMovement(const string reason, Point to,
-            immutable(Point) from, const uint cost)
+    @safe protected Movement makeMovement(const string reason, Point to, Point from, const int cost)
     {
         int x = to.x - from.x;
         int y = to.y - from.y;
-        return new immutable Movement(this.strategy(), reason, DIRECTIONS[x][y], cost);
+        auto dirs = directions();
+        return new Movement(this.strategy(), reason, dirs[x][y], cost);
     }
 
-    protected abstract const(string) strategy();
+    @safe protected abstract const(string) strategy();
 
 public:
     abstract Movement[] analyze(Board b);
+
 }

@@ -2,26 +2,30 @@ module dsnake.movement;
 
 import dsnake.strategy.strategy : Strategy;
 import dsnake.strategy.context : StrategyContext;
-import dsnake.entity : Entity;
 import dsnake.board;
 import dsnake.direction;
+import std.algorithm;
 import std.typecons;
 import std.json;
 
-class Movement : Entity
+class Movement
 {
-@safe:
-
     static Movement[] from(Board board)
     {
-        static auto strategies = StrategyContext.strategies();
+        auto strategies = new StrategyContext().strategies;
 
         Movement[] moves;
 
         foreach (Strategy s; strategies)
             moves ~= s.analyze(board);
 
-        return moves;
+        auto danger_analyzer = new DangerAnalyzer(board);
+        return moves.map!(move => danger_analyzer.analyze(move));
+    }
+
+    @safe static Movement random()
+    {
+        return new Movement("random", "random", Direction.UP, 99_999);
     }
 
     private
@@ -29,12 +33,14 @@ class Movement : Entity
         string _strategy;
         string _reason;
         Direction _direction;
-        uint _cost;
+        int _cost;
     }
+
+@safe:
 
 public:
 
-    this(string strategy, string reason, Direction direction, uint cost) immutable
+    this(string strategy, string reason, Direction direction, int cost)
     {
         _strategy = strategy;
         _reason = reason;
@@ -42,14 +48,13 @@ public:
         _cost = cost;
     }
 
-    override JSONValue json()
+    JSONValue json()
     {
-        auto reason = _reason == "" ? "UNKNOWN" : _reason;
         return JSONValue([
-            "direction": JSONValue(this.direction),
-            "cost": JSONValue(this.cost),
-            "reason": JSONValue(reason),
-            "strategy": JSONValue(this.strategy)
+            "direction": JSONValue(_direction),
+            "cost": JSONValue(_cost),
+            "reason": JSONValue(_reason),
+            "strategy": JSONValue(_strategy)
         ]);
     }
 
@@ -58,7 +63,7 @@ public:
 @property:
     string strategy()
     {
-        return strategy;
+        return _strategy;
     }
 
     string reason()
@@ -71,7 +76,7 @@ public:
         return _direction;
     }
 
-    uint cost()
+    int cost()
     {
         return _cost;
     }

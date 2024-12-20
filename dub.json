@@ -1,12 +1,12 @@
 {
-	"authors": [
-		"Rawley"
-	],
-	"copyright": "Copyright © 2024, Rawley",
-	"dependencies": {
-        "archttp": "~>1.1.1"
-	},
-	"description": "A battlesnake written in D",
-	"license": "MIT",
-	"name": "d-snake"
+    "authors": [
+        "Rawley"
+    ],
+    "copyright": "Copyright © 2024, Rawley",
+    "dependencies": {
+        "vibe-d": "~>0.10.1"
+    },
+    "description": "A battlesnake written in D",
+    "license": "MIT",
+    "name": "d-snake"
 }

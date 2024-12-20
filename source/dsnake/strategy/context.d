@@ -3,14 +3,11 @@ module dsnake.strategy.context;
 import dsnake.strategy.strategy : Strategy;
 import dsnake.strategy.flood : Flood;
 
-class StrategyContext
+struct StrategyContext
 {
-static:
-
-    private immutable Strategy[] STRATEGIES = [new Flood()];
-
-    public Strategy[] strategies()
+@safe:
+    Strategy[] strategies()
     {
-        return STRATEGIES;
+        return [new Flood];
     }
 }

@@ -69,24 +69,21 @@ class Point
 
     static Point[] fromJSONCoordinates(scope JSONValue jv) @trusted
     {
-        if (jv.type != JSONType.ARRAY || jv.type != JSONType.OBJECT)
+        if (jv.type != JSONType.ARRAY && jv.type != JSONType.OBJECT)
         {
             throw new Exception("EXPECTED ARRAY OR OBJECT GOT " ~ jv.type);
         }
 
         if (jv.type == JSONType.OBJECT)
         {
-            auto p = new immutable Point(jv["x"].get!int, jv["y"].get!int);
+            auto p = new Point(jv["x"].get!int, jv["y"].get!int);
             return [p];
         }
 
-        return jv.array
-            .map!((p) {
-                return p.type == JSONType.OBJECT
-                    ? fromJSONCoordinates(p) : throw new Exception("EXPECTED OBJECT GOT " ~ p.type);
-            })
-            .reduce!((a, b) => a ~ b)
+        auto points = jv.array.map!(p => p.type == JSONType.OBJECT
+                ? fromJSONCoordinates(p) : throw new Exception("EXPECTED OBJECT GOT " ~ p.type))
             .array;
+        return reduce!((a, b) => a ~ b)(cast(Point[])[], points);
     }
 
 @disable:

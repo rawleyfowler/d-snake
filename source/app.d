@@ -1,7 +1,7 @@
-import archttp;
+import vibe.vibe;
+import vibe.core.log;
 import dsnake.board;
 import dsnake.movement : Movement;
-import std.logger;
 import std.json;
 import std.functional;
 import std.algorithm.iteration;
@@ -11,46 +11,84 @@ const string VERSION = "1";
 
 void main()
 {
-    auto app = new Archttp;
+    auto settings = new HTTPServerSettings;
+    settings.port = 3000;
+    settings.bindAddresses = ["0.0.0.0"];
+    auto listener = listenHTTP(settings, (scope req, scope res) {
+        switch (req.requestPath.toString())
+        {
+        case "/":
+            index(req, res);
+            break;
+        case "/end":
+            end(req, res);
+            break;
+        case "/start":
+            start(req, res);
+            break;
+        case "/move":
+            move(req, res);
+            break;
+        default:
+            break;
+        }
+    });
 
-    app.get("/", toDelegate(&index));
-    app.get("/end", toDelegate(&end));
-    app.get("/start", toDelegate(&start));
+    scope (exit)
+        listener.stopListening();
 
-    app.listen(3000);
+    runApplication();
 }
 
-void index(scope HttpRequest _, scope HttpResponse res)
+void index(scope HTTPServerRequest _, scope HTTPServerResponse res)
 {
     JSONValue response = [
         "apiversion": VERSION, "author": "rawley fowler", "color": "#FF6962",
         "head": "all-seeing", "tail": "mystic-moon"
     ];
-    res.send(response);
+    res.writeJsonBody(response);
 }
 
-void end(scope HttpRequest _, scope HttpResponse res)
+void end(scope HTTPServerRequest _, scope HTTPServerResponse res)
 {
-    log("DONE GAME!");
-    res.send(JSONValue(["message": "DONE!"]));
+    logInfo("DONE GAME!");
+    res.writeJsonBody(JSONValue(["message": "DONE!"]));
 }
 
-void start(scope HttpRequest _, scope HttpResponse res)
+void start(scope HTTPServerRequest _, scope HTTPServerResponse res)
 {
-    log("STARTING GAME!");
-    res.send(JSONValue(["message": "STARTING!"]));
+    logInfo("STARTING GAME!");
+    res.writeJsonBody(JSONValue(["message": "STARTING!"]));
 }
 
-void move(scope HttpRequest req, scope HttpResponse res)
+void move(scope HTTPServerRequest req, scope HTTPServerResponse res)
 {
-    auto board = new Board(parseJSON(req.body));
+    // TODO: (RF) This is ugly, we should just use vibe's JSON.
+    auto json = parseJSON(req.json().toString());
+    auto board = new Board(json);
+
     auto movements = Movement.from(board);
-    auto best_move = movements.reduce!((a, b) => a.cost < b.cost ? b : a);
-    auto best_move_json = best_move.json;
 
-    log(best_move_json);
+    logInfo("Potential moves:");
+    foreach (Movement m; movements)
+    {
+        if (m is null)
+        {
+            throw new Exception("A MOVEMENT IS NULL!");
+        }
+        logInfo("\t Strategy: %s, Reason: %s, Direction: %s, Cost: %d",
+                m.strategy, m.reason, m.direction, m.cost);
+    }
+    auto best_move = reduce!((a, b) => b.cost < a.cost ? b : a)(Movement.random(), movements);
 
-    res.send(JSONValue([
+    if (best_move is null)
+        throw new Exception("best_move is null somehow!");
+
+    logInfo("MOVING %s REASONING: %s", best_move.direction, best_move.reason);
+
+    auto best_move_json = best_move.json();
+
+    res.writeJsonBody(JSONValue([
             "move": best_move_json["direction"],
             "shout": JSONValue("Foo!")
     ]));
