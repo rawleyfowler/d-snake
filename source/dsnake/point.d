@@ -35,12 +35,17 @@ class Point
         this.y = y;
     }
 
+    override int opCmp(Object o) const
+    {
+        if (auto p = cast(Point) o)
+            return (this.x - p.x) + (this.y - p.y);
+
+        throw new Exception("Cant CMP non point with point");
+    }
+
     override size_t toHash() const nothrow
     {
-        ulong xs = 0 | x;
-        ulong ys = 0 | y;
-        ys = ys << 32;
-        return xs | ys;
+        return hashOf(x, y);
     }
 
     Point move(Direction d)

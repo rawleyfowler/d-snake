@@ -5,6 +5,7 @@ import std.container.dlist;
 import std.conv;
 import std.array;
 import std.algorithm;
+import dsnake.reason;
 import dsnake.constant;
 import dsnake.point : Point;
 import dsnake.snake : Snake;
@@ -12,6 +13,7 @@ import dsnake.strategy.strategy : Strategy;
 import dsnake.strategy.context : StrategyContext;
 import dsnake.movement : Movement;
 import dsnake.board : Board;
+import dsnake.util : makePotentials;
 
 /*
    Battlesnake Strategy: Flood
@@ -96,13 +98,12 @@ class Flood : Strategy
     {
         auto opponents = b.snakes.filter!(s => !s.me).array;
         auto me = b.snakes.filter!(s => s.me).array[0];
-        Point[][string] opponent_potential_moves_hash = this.makePotentials(opponents,
-                b.height, b.width);
+        Point[][string] opponent_potential_moves_hash = makePotentials(opponents, b.height, b.width);
         Point[] opponent_bodies = reduce!((a, b) => a ~ b)(cast(Point[])[],
                 opponents.map!(s => s.body[0 .. $]).array);
         Point[] opponent_tails = opponents.map!(s => s.body[$ - 1]).array;
         Point[] opponent_heads = opponents.map!(s => s.body[0]).array;
-        Point[] me_potential_moves = this.makePotentials([me], b.height, b.width)[SNAKE_NAME];
+        Point[] me_potential_moves = makePotentials([me], b.height, b.width)[SNAKE_NAME];
         Point[] opponent_potential_moves;
         foreach (Point[] points; opponent_potential_moves_hash.byValue)
         {

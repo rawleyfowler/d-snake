@@ -1,31 +1,43 @@
 module dsnake.movement;
 
+import dsnake.analyzer.dangeranalyzer : DangerAnalyzer;
 import dsnake.strategy.strategy : Strategy;
 import dsnake.strategy.context : StrategyContext;
 import dsnake.board;
 import dsnake.direction;
+import dsnake.reason;
+import std.array;
 import std.algorithm;
 import std.typecons;
 import std.json;
 
 class Movement
 {
-    static Movement[] from(Board board)
+    static Movement[] from(ref Board board)
     {
-        auto strategies = new StrategyContext().strategies;
+        auto context = new StrategyContext();
 
         Movement[] moves;
+        if (board.me.health < 75 || board.me.length < 6)
+        {
+            moves ~= context.hungry().analyze(board);
+        }
+        else
+        {
+            moves ~= context.flood().analyze(board);
+        }
 
-        foreach (Strategy s; strategies)
-            moves ~= s.analyze(board);
+        // If there is only one valid move there is no need to do analysis.
+        if (moves.length == 1)
+            return moves;
 
         auto danger_analyzer = new DangerAnalyzer(board);
-        return moves.map!(move => danger_analyzer.analyze(move));
+        return moves.map!(move => danger_analyzer.analyze(move)).array;
     }
 
     @safe static Movement random()
     {
-        return new Movement("random", "random", Direction.UP, 99_999);
+        return new Movement("random", Reason.RANDOM, Direction.UP, int.max);
     }
 
     private
@@ -40,7 +52,7 @@ class Movement
 
 public:
 
-    this(string strategy, string reason, Direction direction, int cost)
+    this(const(string) strategy, const(string) reason, Direction direction, const(int) cost)
     {
         _strategy = strategy;
         _reason = reason;
