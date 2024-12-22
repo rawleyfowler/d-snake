@@ -12,7 +12,7 @@ const string VERSION = "1";
 void main()
 {
     auto settings = new HTTPServerSettings;
-    settings.port = 3000;
+    settings.port = 8080;
     settings.bindAddresses = ["0.0.0.0"];
     auto listener = listenHTTP(settings, (scope req, scope res) {
         switch (req.requestPath.toString())
