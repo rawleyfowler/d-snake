@@ -6,6 +6,7 @@ COPY . /tmp
 WORKDIR /tmp
 RUN dub -v build
 
+# We could probably use Alpine... but not sure D support for packages there.
 FROM ubuntu:latest
 RUN rm -rf "/var/lib/apt/lists/*"
 RUN apt-get update
