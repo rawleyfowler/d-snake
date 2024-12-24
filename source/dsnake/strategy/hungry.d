@@ -114,7 +114,7 @@ class Hungry : Strategy
     {
         auto potentials = makePotentials([b.me], b.height, b.width)[SNAKE_NAME];
         auto obstacles = reduce!((a, b) => a ~ b)(cast(Point[])[],
-                b.snakes.map!(s => s.body[1 .. $]).array);
+                b.snakes.map!(s => s.body[1 .. $ - 1]).array);
 
         foreach (Point[] ps; makePotentials(b.snakes.filter!(s => !s.me
                 && s.health > b.me.health).array, b.height, b.width).byValue())
