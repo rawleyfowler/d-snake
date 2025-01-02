@@ -124,9 +124,33 @@ class Flood : Strategy
                 movements ~= this.makeMovement("FOOD!", p, me.head, this.DEFAULT_COST / 10);
             }
 
-            if (opponent_tails.canFind(p) || me.body[$ - 1] == p)
+            if (opponent_tails.canFind(p))
             {
-                movements ~= this.makeMovement("TAIL FOLLOW!", p, me.head, this.DEFAULT_COST / 2);
+                bool should_follow_tail = true;
+                foreach (Snake opp; opponents)
+                {
+                    if (opp.body[$ - 1] == p)
+                    {
+                        auto opp_moves = opponent_potential_moves_hash[opp.name];
+                        foreach (Point po; opp_moves)
+                        {
+                            if (b.food.canFind(po))
+                            {
+                                /* If the opponent is likely to eat, we shouldn't follow their tail */
+                                should_follow_tail = false;
+                            }
+                        }
+                    }
+                }
+
+                if (should_follow_tail)
+                    movements ~= this.makeMovement("TAIL FOLLOW!", p, me.head,
+                            this.DEFAULT_COST / 2);
+            }
+
+            if (p == b.me.body[$ - 1])
+            {
+                /* TODO: (RF) Find out best time to follow our own tail */
             }
 
             movements ~= this.makeMovementFromPoint(p, b, b.food, opponent_potential_moves,

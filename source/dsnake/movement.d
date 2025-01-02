@@ -49,7 +49,6 @@ class Movement
     }
 
 @safe:
-
 public:
 
     this(const(string) strategy, const(string) reason, Direction direction, const(int) cost)
@@ -92,5 +91,4 @@ public:
     {
         return _cost;
     }
-
 }
